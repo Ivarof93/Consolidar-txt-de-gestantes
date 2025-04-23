@@ -1,0 +1,75 @@
+import os
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import ttkbootstrap as ttk
+
+def consolidar_y_separar_txt(directorio, salida_base='salida'):
+    try:
+        usuarias, atenciones, seguimientos, urgencias = [], [], [], []
+
+        for archivo in os.listdir(directorio):
+            if archivo.endswith('.txt'):
+                with open(os.path.join(directorio, archivo), 'r', encoding='utf-8') as f:
+                    for linea in f:
+                        if linea.startswith('2'):
+                            usuarias.append(linea)
+                        elif linea.startswith('3'):
+                            atenciones.append(linea)
+                        elif linea.startswith('4'):
+                            seguimientos.append(linea)
+                        elif linea.startswith('5'):
+                            urgencias.append(linea)
+
+        # Guardar archivos por tipo
+        with open(os.path.join(directorio, f'usuarias.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(usuarias)
+        with open(os.path.join(directorio, f'atenciones.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(atenciones)
+        with open(os.path.join(directorio, f'seguimientos.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(seguimientos)
+        with open(os.path.join(directorio, f'urgencias.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(urgencias)
+
+        # Guardar consolidado
+        with open(os.path.join(directorio, f'consolidado.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(usuarias + atenciones + seguimientos + urgencias)
+
+        messagebox.showinfo("Éxito", "¡Archivos generados exitosamente!")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Ocurrió un error: {str(e)}")
+
+def seleccionar_carpeta():
+    carpeta = filedialog.askdirectory()
+    if carpeta:
+        entrada_ruta.delete(0, tk.END)
+        entrada_ruta.insert(0, carpeta)
+
+def procesar():
+    ruta = entrada_ruta.get()
+    if not ruta or not os.path.isdir(ruta):
+        messagebox.showwarning("Advertencia", "Selecciona una carpeta válida.")
+        return
+    consolidar_y_separar_txt(ruta)
+
+# === INTERFAZ ===
+ventana = ttk.Window(themename="cyborg")  # Puedes probar "flatly", "minty", "darkly", etc.
+ventana.title("Consolidador de TXT por tipo")
+ventana.geometry("500x200")
+ventana.resizable(False, False)
+
+ttk.Label(ventana, text="Selecciona la carpeta con los .txt:", font=("Segoe UI", 12)).pack(pady=10)
+
+frame = ttk.Frame(ventana)
+frame.pack(pady=5)
+
+entrada_ruta = ttk.Entry(frame, width=40)
+entrada_ruta.pack(side=tk.LEFT, padx=5)
+
+btn_seleccionar = ttk.Button(frame, text="Examinar", command=seleccionar_carpeta)
+btn_seleccionar.pack(side=tk.LEFT)
+
+btn_procesar = ttk.Button(ventana, text="Procesar", bootstyle="success", command=procesar)
+btn_procesar.pack(pady=20)
+
+ventana.mainloop()
