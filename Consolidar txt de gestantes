@@ -4,37 +4,58 @@ from tkinter import filedialog, messagebox
 import ttkbootstrap as ttk
 
 def consolidar_y_separar_txt(directorio, salida_base='salida'):
+    """
+    Lee todos los archivos .txt de un directorio, separa las líneas por
+    categoría, elimina duplicados y guarda los resultados en nuevos archivos.
+    """
     try:
-        usuarias, atenciones, seguimientos, urgencias = [], [], [], []
+        # Usar sets para almacenar líneas únicas y evitar duplicados automáticamente.
+        usuarias, atenciones, seguimientos, urgencias = set(), set(), set(), set()
+        
+        # Nombres de los archivos de salida para evitar leerlos si el script se corre de nuevo.
+        archivos_salida = ['usuarias.txt', 'atenciones.txt', 'seguimientos.txt', 'urgencias.txt', 'consolidado.txt']
 
         for archivo in os.listdir(directorio):
-            if archivo.endswith('.txt'):
+            # Procesar solo si es un .txt y no es uno de los archivos de salida.
+            if archivo.endswith('.txt') and archivo not in archivos_salida:
                 with open(os.path.join(directorio, archivo), 'r', encoding='utf-8') as f:
                     for linea in f:
-                        if linea.startswith('2'):
-                            usuarias.append(linea)
-                        elif linea.startswith('3'):
-                            atenciones.append(linea)
-                        elif linea.startswith('4'):
-                            seguimientos.append(linea)
-                        elif linea.startswith('5'):
-                            urgencias.append(linea)
+                        linea_limpia = linea.strip()  # Limpiar espacios/saltos de línea.
+                        if not linea_limpia:  # Omitir líneas completamente en blanco.
+                            continue
+
+                        # Añadir la línea limpia + un salto de línea al set correspondiente.
+                        # El set se encarga de ignorar los duplicados.
+                        if linea_limpia.startswith('2'):
+                            usuarias.add(linea_limpia + '\n')
+                        elif linea_limpia.startswith('3'):
+                            atenciones.add(linea_limpia + '\n')
+                        elif linea_limpia.startswith('4'):
+                            seguimientos.add(linea_limpia + '\n')
+                        elif linea_limpia.startswith('5'):
+                            urgencias.add(linea_limpia + '\n')
+
+        # Convertir los sets a listas y ordenarlas para una salida consistente.
+        lista_usuarias = sorted(list(usuarias))
+        lista_atenciones = sorted(list(atenciones))
+        lista_seguimientos = sorted(list(seguimientos))
+        lista_urgencias = sorted(list(urgencias))
 
         # Guardar archivos por tipo
-        with open(os.path.join(directorio, f'usuarias.txt'), 'w', encoding='utf-8') as f:
-            f.writelines(usuarias)
-        with open(os.path.join(directorio, f'atenciones.txt'), 'w', encoding='utf-8') as f:
-            f.writelines(atenciones)
-        with open(os.path.join(directorio, f'seguimientos.txt'), 'w', encoding='utf-8') as f:
-            f.writelines(seguimientos)
-        with open(os.path.join(directorio, f'urgencias.txt'), 'w', encoding='utf-8') as f:
-            f.writelines(urgencias)
+        with open(os.path.join(directorio, 'usuarias.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(lista_usuarias)
+        with open(os.path.join(directorio, 'atenciones.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(lista_atenciones)
+        with open(os.path.join(directorio, 'seguimientos.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(lista_seguimientos)
+        with open(os.path.join(directorio, 'urgencias.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(lista_urgencias)
 
         # Guardar consolidado
-        with open(os.path.join(directorio, f'consolidado.txt'), 'w', encoding='utf-8') as f:
-            f.writelines(usuarias + atenciones + seguimientos + urgencias)
+        with open(os.path.join(directorio, 'consolidado.txt'), 'w', encoding='utf-8') as f:
+            f.writelines(lista_usuarias + lista_atenciones + lista_seguimientos + lista_urgencias)
 
-        messagebox.showinfo("Éxito", "¡Archivos generados exitosamente!")
+        messagebox.showinfo("Éxito", "¡Archivos generados exitosamente y sin duplicados!")
 
     except Exception as e:
         messagebox.showerror("Error", f"Ocurrió un error: {str(e)}")
@@ -52,8 +73,8 @@ def procesar():
         return
     consolidar_y_separar_txt(ruta)
 
-# === INTERFAZ ===
-ventana = ttk.Window(themename="cyborg")  # Puedes probar "flatly", "minty", "darkly", etc.
+# === INTERFAZ (sin cambios) ===
+ventana = ttk.Window(themename="cyborg")
 ventana.title("Consolidador de TXT por tipo")
 ventana.geometry("500x200")
 ventana.resizable(False, False)
